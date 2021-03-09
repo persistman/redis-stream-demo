@@ -30,3 +30,12 @@ out/
 
 ### VS Code ###
 .vscode/
+
+###jar###
+target
+redis-stream-producer/target
+redis-stream-consumer/target
+redis-stream-common/target
+**.jar
+
+

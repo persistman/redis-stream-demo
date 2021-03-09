@@ -2,15 +2,13 @@ package com.redisstream.kickstart.producer;
 
 import com.redisstream.kickstart.config.ApplicationConfig;
 import com.redisstream.kickstart.constant.Constant;
-import javafx.application.Application;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.connection.stream.StreamRecords;
 import org.springframework.data.redis.connection.stream.StringRecord;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -19,10 +17,10 @@ import java.util.Random;
 @Component
 public class StreamProducer {
 
-    @Autowired
+    @Resource
     private RedisTemplate<String, Object> redisTemplate;
 
-    @Autowired
+    @Resource
     private ApplicationConfig config;
 
     public void produceNumbers() {

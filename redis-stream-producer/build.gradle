@@ -1,8 +1,0 @@
-if(!project.hasProperty("port"))
-    project.ext.set("port", 8083)
-bootRun {
-    args += ["--server.port=${project.port}"]
-}
-dependencies {
-    implementation project(':redis-stream-common')
-}
