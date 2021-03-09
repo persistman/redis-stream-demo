@@ -91,14 +91,14 @@ public class PendingMessageScheduler {
         } else {
             try {
                 MapRecord<String, Object, Object> message = messagesToProcess.get(0);
-                String inputNumber = (String) message.getValue().get(NUMBER_KEY);
+                String inputNumber = message.getValue().get(NUMBER_KEY).toString();
                 final int number = Integer.parseInt(inputNumber);
                 if (number % 2 == 0) {
                     redisTemplate.opsForList().rightPush(config.getEvenListKey(), inputNumber);
                 } else {
                     redisTemplate.opsForList().rightPush(config.getOddListKey(), inputNumber);
                 }
-                redisTemplate.opsForHash().put(config.getRecordCacheKey(), LAST_RESULT_HASH_KEY, number);
+                redisTemplate.opsForHash().put(config.getRecordCacheKey(), LAST_RESULT_HASH_KEY, inputNumber);
                 redisTemplate.opsForHash().increment(config.getRecordCacheKey(), PROCESSED_HASH_KEY, 1);
                 redisTemplate.opsForHash().increment(config.getRecordCacheKey(), RETRY_PROCESSED_HASH_KEY, 1);
                 redisTemplate.opsForStream().acknowledge(config.getConsumerGroupName(), message);

@@ -1,7 +1,6 @@
 package com.redisstream.kickstart.consumer;
 
 import com.redisstream.kickstart.config.ApplicationConfig;
-import com.redisstream.kickstart.constant.Constant;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.StatusOutput;
@@ -11,19 +10,19 @@ import io.lettuce.core.protocol.CommandType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.stream.Consumer;
 import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.connection.stream.ReadOffset;
 import org.springframework.data.redis.connection.stream.StreamOffset;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
+import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.stream.StreamListener;
 import org.springframework.data.redis.stream.StreamMessageListenerContainer;
 import org.springframework.data.redis.stream.Subscription;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.time.Duration;
 
 import static com.redisstream.kickstart.constant.Constant.*;
@@ -31,17 +30,17 @@ import static com.redisstream.kickstart.constant.Constant.*;
 @Slf4j
 @Component
 @EnableScheduling
-public class StreamConsumer implements StreamListener<String, MapRecord<String, Object, Object>>, InitializingBean,
+public class StreamConsumer implements StreamListener<String, MapRecord<String, String, Object>>, InitializingBean,
         DisposableBean {
 
 
-    @Autowired
+    @Resource
     ApplicationConfig config;
 
-    @Autowired
+    @Resource
     private RedisTemplate<String, Object> redisTemplate;
 
-    private StreamMessageListenerContainer<String, MapRecord<String, Object, Object>> listenerContainer;
+    private StreamMessageListenerContainer<String, MapRecord<String, String, Object>> listenerContainer;
     private Subscription subscription;
     private String consumerName;
     private String consumerGroupName;
@@ -49,10 +48,11 @@ public class StreamConsumer implements StreamListener<String, MapRecord<String, 
 
 
     @Override
-    public void onMessage(MapRecord<String, Object, Object> message) {
+    public void onMessage(MapRecord<String, String, Object> message) {
         //extract the number from the message
         try {
-            String inputNumber = (String) message.getValue().get(NUMBER_KEY);
+            String inputNumber = message.getValue().get(NUMBER_KEY).toString();
+//            var number = (Integer)message.getValue().get(NUMBER_KEY);
             final int number = Integer.parseInt(inputNumber);
             if (number % 2 == 0) {
                 redisTemplate.opsForList().rightPush(config.getEvenListKey(), inputNumber);
@@ -115,8 +115,7 @@ public class StreamConsumer implements StreamListener<String, MapRecord<String, 
         this.listenerContainer = StreamMessageListenerContainer.create(redisTemplate.getConnectionFactory(),
                 StreamMessageListenerContainer
                         .StreamMessageListenerContainerOptions.builder()
-                        .hashKeySerializer(new JdkSerializationRedisSerializer())
-                        .hashValueSerializer(new JdkSerializationRedisSerializer())
+                        .hashKeySerializer(RedisSerializer.string())
                         .pollTimeout(Duration.ofMillis(config.getStreamPollTimeout()))
                         .build());
 
