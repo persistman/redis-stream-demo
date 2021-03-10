@@ -17,6 +17,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 import static com.redisstream.kickstart.constant.Constant.*;
@@ -30,10 +31,10 @@ public class PendingMessageScheduler {
     private String streamName;
     private String consumerGroupName;
 
-    @Autowired
+    @Resource
     private ApplicationConfig config;
 
-    @Autowired
+    @Resource
     private RedisTemplate<String, Object> redisTemplate;
 
     @Scheduled(fixedRate = 4000)
@@ -94,14 +95,15 @@ public class PendingMessageScheduler {
                 String inputNumber = message.getValue().get(NUMBER_KEY).toString();
                 final int number = Integer.parseInt(inputNumber);
                 if (number % 2 == 0) {
-                    redisTemplate.opsForList().rightPush(config.getEvenListKey(), inputNumber);
+                    redisTemplate.opsForList().rightPush(config.getEvenListKey(), number);
                 } else {
-                    redisTemplate.opsForList().rightPush(config.getOddListKey(), inputNumber);
+                    redisTemplate.opsForList().rightPush(config.getOddListKey(), number);
                 }
                 redisTemplate.opsForHash().put(config.getRecordCacheKey(), LAST_RESULT_HASH_KEY, inputNumber);
                 redisTemplate.opsForHash().increment(config.getRecordCacheKey(), PROCESSED_HASH_KEY, 1);
                 redisTemplate.opsForHash().increment(config.getRecordCacheKey(), RETRY_PROCESSED_HASH_KEY, 1);
                 redisTemplate.opsForStream().acknowledge(config.getConsumerGroupName(), message);
+                redisTemplate.opsForStream().delete(message);
                 log.info("Message has been processed after retrying");
             } catch (Exception ex) {
                 //log the exception and increment the number of errors count

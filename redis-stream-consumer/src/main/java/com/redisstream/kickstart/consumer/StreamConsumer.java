@@ -55,13 +55,14 @@ public class StreamConsumer implements StreamListener<String, MapRecord<String, 
 //            var number = (Integer)message.getValue().get(NUMBER_KEY);
             final int number = Integer.parseInt(inputNumber);
             if (number % 2 == 0) {
-                redisTemplate.opsForList().rightPush(config.getEvenListKey(), inputNumber);
+                redisTemplate.opsForList().rightPush(config.getEvenListKey(), number);
             } else {
-                redisTemplate.opsForList().rightPush(config.getOddListKey(), inputNumber);
+                redisTemplate.opsForList().rightPush(config.getOddListKey(), number);
             }
-            redisTemplate.opsForHash().put(config.getRecordCacheKey(), LAST_RESULT_HASH_KEY, number);
+            redisTemplate.opsForHash().put(config.getRecordCacheKey(), LAST_RESULT_HASH_KEY, inputNumber);
             redisTemplate.opsForHash().increment(config.getRecordCacheKey(), PROCESSED_HASH_KEY, 1);
             redisTemplate.opsForStream().acknowledge(config.getConsumerGroupName(), message);
+            redisTemplate.opsForStream().delete(message);
             log.info("Message has been processed");
         } catch (Exception ex) {
             //log the exception and increment the number of errors count
